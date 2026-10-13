@@ -1,0 +1,257 @@
+{
+ "janela_ini": "2026-10-14T00:00:00",
+ "janela_fim": "2026-10-28T23:59:59",
+ "ufs": [
+  "SP",
+  "MG",
+  "PR",
+  "GO",
+  "SC",
+  "MS"
+ ],
+ "registros_lidos": 8,
+ "registros_janela": 6,
+ "cnpj": null,
+ "empresa": "Sua Empresa",
+ "cnae": "46.45-1-01 — Comércio atacadista de instrumentos e materiais para uso médico, cirúrgico, hospitalar e de laboratórios",
+ "avisos": "2 processo(s) sem análise de edital (descartados na triagem ou acima do limite).",
+ "oportunidades": [
+  {
+   "numeroControlePNCP": "11111111000101-1-00001/2026",
+   "uf": "SP",
+   "municipio": "Sorocaba",
+   "orgao": "MUNICIPIO DE SOROCABA",
+   "unidade": "Prefeitura Municipal de Sorocaba",
+   "cnpj": "11111111000101",
+   "anoCompra": 2025,
+   "sequencialCompra": 1,
+   "numeroCompra": "00128",
+   "processo": "E00128",
+   "objetoCompra": "Registro de preços para aquisição de reagentes laboratoriais e tubos de coleta a vácuo",
+   "informacaoComplementar": "",
+   "dataAberturaProposta": "2026-10-13T09:00:00",
+   "dataEncerramentoProposta": "2026-10-15T09:00:00",
+   "modalidadeId": 6,
+   "modalidadeNome": "Pregão - Eletrônico",
+   "modoDisputaNome": "Aberto",
+   "srp": true,
+   "valorTotalEstimado": 93225.42,
+   "amparoLegal": "Lei 14.133/2021, Art. 28, I",
+   "situacaoCompraNome": "Divulgada no PNCP",
+   "usuarioNome": "Compras.gov.br",
+   "linkSistemaOrigem": "https://cnetmobile.estaleiro.serpro.gov.br/comprasnet-web/public/landing?destino=acompanhamento-compra&compra=1",
+   "link_pncp": "https://pncp.gov.br/app/editais/11111111000101/2025/1",
+   "termos": [
+    "reagente",
+    "laboratoriais + reagente",
+    "tubo + coleta",
+    "coleta a vacuo"
+   ],
+   "filtros": [
+    1,
+    2,
+    11,
+    12
+   ],
+   "estatisticas": {
+    "paginasConsultadas": 7,
+    "registrosLidos": 8,
+    "naJanela": 6,
+    "selecionados": 4,
+    "paginasComErro": 0,
+    "errosAmostra": []
+   },
+   "relevancia_triagem": "ALTA",
+   "motivo_triagem": "teste",
+   "aviso_triagem": null,
+   "analisar": true,
+   "analise": {
+    "resumo": "ok",
+    "relevancia": "ALTA",
+    "prazos": {
+     "validade_proposta": {
+      "valor": "60 dias",
+      "fonte": "edital.pdf · pág. 1"
+     }
+    },
+    "declaracoes": [
+     {
+      "nome": "Declaração de não emprego de menor"
+     }
+    ],
+    "auditoria": {
+     "confianca": "ALTA",
+     "divergencias": [],
+     "avisos": []
+    }
+   }
+  },
+  {
+   "numeroControlePNCP": "11111111000106-1-00006/2026",
+   "uf": "MS",
+   "municipio": "Sorocaba",
+   "orgao": "MUNICIPIO DE SOROCABA",
+   "unidade": "Prefeitura Municipal de Sorocaba",
+   "cnpj": "11111111000106",
+   "anoCompra": 2025,
+   "sequencialCompra": 6,
+   "numeroCompra": "00128",
+   "processo": "E00128",
+   "objetoCompra": "Dispensa: aquisição de cubetas para analisador",
+   "informacaoComplementar": "",
+   "dataAberturaProposta": "2026-10-13T09:00:00",
+   "dataEncerramentoProposta": "2026-10-18T14:00:00",
+   "modalidadeId": 8,
+   "modalidadeNome": "Dispensa",
+   "modoDisputaNome": "Aberto",
+   "srp": true,
+   "valorTotalEstimado": 93225.42,
+   "amparoLegal": "Lei 14.133/2021, Art. 28, I",
+   "situacaoCompraNome": "Divulgada no PNCP",
+   "usuarioNome": "Compras.gov.br",
+   "linkSistemaOrigem": null,
+   "link_pncp": "https://pncp.gov.br/app/editais/11111111000106/2025/6",
+   "termos": [
+    "cubeta"
+   ],
+   "filtros": [
+    14
+   ],
+   "estatisticas": {
+    "paginasConsultadas": 7,
+    "registrosLidos": 8,
+    "naJanela": 6,
+    "selecionados": 4,
+    "paginasComErro": 0,
+    "errosAmostra": []
+   },
+   "relevancia_triagem": "ALTA",
+   "motivo_triagem": "teste",
+   "aviso_triagem": null,
+   "analisar": true,
+   "analise": {
+    "resumo": "ok",
+    "relevancia": "ALTA",
+    "prazos": {
+     "validade_proposta": {
+      "valor": "60 dias",
+      "fonte": "edital.pdf · pág. 1"
+     }
+    },
+    "declaracoes": [
+     {
+      "nome": "Declaração de não emprego de menor"
+     }
+    ],
+    "auditoria": {
+     "avisos": [
+      "Auditor indisponível: {\"message\":\"overloaded\"}",
+      "Análise SEM auditoria cruzada — conferir manualmente."
+     ]
+    }
+   }
+  },
+  {
+   "numeroControlePNCP": "11111111000103-1-00003/2026",
+   "uf": "MG",
+   "municipio": "Sorocaba",
+   "orgao": "MUNICIPIO DE SOROCABA",
+   "unidade": "Prefeitura Municipal de Sorocaba",
+   "cnpj": "11111111000103",
+   "anoCompra": 2025,
+   "sequencialCompra": 3,
+   "numeroCompra": "00128",
+   "processo": "E00128",
+   "objetoCompra": "Aquisição de meios de cultura e ágar sangue para microbiologia",
+   "informacaoComplementar": "",
+   "dataAberturaProposta": "2026-10-13T09:00:00",
+   "dataEncerramentoProposta": "2026-10-20T10:00:00",
+   "modalidadeId": 6,
+   "modalidadeNome": "Pregão - Eletrônico",
+   "modoDisputaNome": "Aberto",
+   "srp": true,
+   "valorTotalEstimado": 93225.42,
+   "amparoLegal": "Lei 14.133/2021, Art. 28, I",
+   "situacaoCompraNome": "Divulgada no PNCP",
+   "usuarioNome": "BLL Compras",
+   "linkSistemaOrigem": "https://bllcompras.com/Process/ProcessView?param1=x",
+   "link_pncp": "https://pncp.gov.br/app/editais/11111111000103/2025/3",
+   "termos": [
+    "microbiologia",
+    "meios de cultura"
+   ],
+   "filtros": [
+    7,
+    8
+   ],
+   "estatisticas": {
+    "paginasConsultadas": 7,
+    "registrosLidos": 8,
+    "naJanela": 6,
+    "selecionados": 4,
+    "paginasComErro": 0,
+    "errosAmostra": []
+   },
+   "relevancia_triagem": "ALTA",
+   "motivo_triagem": "teste",
+   "aviso_triagem": null,
+   "analisar": true,
+   "analise": {
+    "relevancia": "ALTA",
+    "resumo": "Triagem: teste"
+   }
+  },
+  {
+   "numeroControlePNCP": "11111111000107-1-00007/2026",
+   "uf": "SC",
+   "municipio": "Sorocaba",
+   "orgao": "MUNICIPIO DE SOROCABA",
+   "unidade": "Prefeitura Municipal de Sorocaba",
+   "cnpj": "11111111000107",
+   "anoCompra": 2025,
+   "sequencialCompra": 7,
+   "numeroCompra": "00128",
+   "processo": "E00128",
+   "objetoCompra": "Aquisição de kits para diagnóstico e reagentes de hematologia",
+   "informacaoComplementar": "",
+   "dataAberturaProposta": "2026-10-13T09:00:00",
+   "dataEncerramentoProposta": "2026-10-27T09:30:00",
+   "modalidadeId": 6,
+   "modalidadeNome": "Pregão - Eletrônico",
+   "modoDisputaNome": "Aberto",
+   "srp": true,
+   "valorTotalEstimado": 93225.42,
+   "amparoLegal": "Lei 14.133/2021, Art. 28, I",
+   "situacaoCompraNome": "Divulgada no PNCP",
+   "usuarioNome": "ECustomize Consultoria em Software S.A",
+   "linkSistemaOrigem": "https://www.portaldecompraspublicas.com.br/processos/SC/X",
+   "link_pncp": "https://pncp.gov.br/app/editais/11111111000107/2025/7",
+   "termos": [
+    "reagente",
+    "hematologia",
+    "kits para diagnostico"
+   ],
+   "filtros": [
+    1,
+    4,
+    10
+   ],
+   "estatisticas": {
+    "paginasConsultadas": 7,
+    "registrosLidos": 8,
+    "naJanela": 6,
+    "selecionados": 4,
+    "paginasComErro": 0,
+    "errosAmostra": []
+   },
+   "relevancia_triagem": "DESCARTAR",
+   "motivo_triagem": "teste",
+   "aviso_triagem": null,
+   "analisar": false,
+   "analise": {
+    "relevancia": "DESCARTAR",
+    "resumo": "Triagem: teste"
+   }
+  }
+ ]
+}

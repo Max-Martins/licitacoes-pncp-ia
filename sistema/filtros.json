@@ -1,0 +1,30 @@
+{
+  "_como_funciona": "Um processo é selecionado quando algum filtro casa. Um filtro casa quando: (a) QUALQUER termo de 'chave' aparece no objeto; (b) se houver 'complementares', pelo menos um deles também aparece; (c) nenhum termo de 'exclusoes' aparece. A comparação ignora acentos e maiúsculas e procura o termo no INÍCIO das palavras ('reagent' encontra 'reagente' e 'reagentes'). Use 'exato': true para exigir a palavra inteira.",
+  "_exemplo": "Filtros de exemplo para um fornecedor de produtos de laboratório e diagnóstico. Troque pelos termos do seu ramo e rode: python sistema/n8n/build_workflow.py",
+  "filtros": [
+    { "id": 1, "chave": ["reagente", "reagentes"], "exclusoes": ["piscina", "tratamento de agua"] },
+    { "id": 2, "chave": ["laboratorio", "laboratoriais", "laboratorial"], "complementares": ["material", "materiais", "insumo", "insumos", "reagente", "vidraria", "equipamento", "kit", "kits", "consumo"], "exclusoes": ["servico de exame", "prestacao de servico", "obra", "reforma"] },
+    { "id": 3, "chave": ["bioquimica"] },
+    { "id": 4, "chave": ["hematologia", "hematologico"] },
+    { "id": 5, "chave": ["coagulacao"] },
+    { "id": 6, "chave": ["imunologia", "imunoensaio", "imunologico"] },
+    { "id": 7, "chave": ["microbiologia", "microbiologico"] },
+    { "id": 8, "chave": ["meio de cultura", "meios de cultura", "agar"] },
+    { "id": 9, "chave": ["teste rapido", "testes rapidos"] },
+    { "id": 10, "chave": ["diagnostico in vitro", "diagnostico laboratorial", "kits para diagnostico", "kit para diagnostico", "kits de diagnostico"] },
+    { "id": 11, "chave": ["tubo"], "complementares": ["coleta", "vacuo", "ensaio", "centrifuga", "eppendorf", "microtubo"], "exclusoes": ["cola", "pvc", "esgoto", "aco", "ferro", "galvanizado"] },
+    { "id": 12, "chave": ["coleta de sangue", "coleta a vacuo", "coleta de urina", "coletor universal"] },
+    { "id": 13, "chave": ["lamina", "laminas", "laminula", "laminulas"], "complementares": ["microscopia", "microscopio", "lamínula", "laminula", "histologia"], "exclusoes": ["bisturi", "barbear", "serra"] },
+    { "id": 14, "chave": ["cubeta", "cubetas"] },
+    { "id": 15, "chave": ["ponteira", "ponteiras", "micropipeta", "pipeta", "pipetas"] },
+    { "id": 16, "chave": ["vidraria", "vidrarias", "bequer", "proveta", "erlenmeyer", "placa de petri"] },
+    { "id": 17, "chave": ["urinalise", "tira reagente", "tiras reagentes", "fita reagente"] },
+    { "id": 18, "chave": ["gasometria", "eletrolitos", "glicosimetro", "tiras de glicemia"] },
+    { "id": 19, "chave": ["hemoglobina glicada", "pcr ultrassensivel", "sorologia", "sorologico"] },
+    { "id": 20, "chave": ["corante", "corantes", "coloracao"], "complementares": ["gram", "panotico", "giemsa", "hematologia", "microscopia", "laboratorio"], "exclusoes": ["alimento", "cabelo", "tinta"] },
+    { "id": 21, "chave": ["analisador", "analisadores"], "complementares": ["bioquimico", "hematologico", "laboratorio", "comodato", "imunologico", "urina"] },
+    { "id": 22, "chave": ["comodato"], "complementares": ["reagente", "reagentes", "equipamento", "analisador"] },
+    { "id": 23, "chave": ["controle de qualidade"], "complementares": ["laboratorio", "laboratorial", "interno", "externo"] },
+    { "id": 24, "chave": ["swab", "swabs"] }
+  ]
+}

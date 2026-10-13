@@ -1,0 +1,26 @@
+# Segredos e dados locais — nunca vão para o GitHub
+.env
+*.env
+!.env.example
+MIGRACAO*/
+credenciais*.json
+*.log
+# Papel timbrado da sua empresa (opcional, fica só no seu computador)
+sistema/worker/app/modelos/
+
+# Dados de produção (editais, relatórios, tabelas de preço)
+LICITACOES/
+_CATALOGOS/
+*.xls
+_RELATORIOS/
+sistema/worker/dados/
+
+# Python / Node
+__pycache__/
+*.pyc
+node_modules/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store

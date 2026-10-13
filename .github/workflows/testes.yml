@@ -1,0 +1,63 @@
+name: testes
+on: [push, pull_request]
+
+jobs:
+  fluxo-n8n:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: O fluxo publicado está atualizado com o código dos nós
+        run: |
+          python sistema/n8n/build_workflow.py
+          python - <<'PY'
+          import json, subprocess
+          novo = json.load(open("sistema/n8n/LICITACOES_PNCP_IA.json", encoding="utf-8"))
+          antigo = json.loads(subprocess.check_output(["git", "show", "HEAD:sistema/n8n/LICITACOES_PNCP_IA.json"]))
+          sem_ids = lambda wf: [{k: v for k, v in n.items() if k not in ("id", "webhookId")} for n in wf["nodes"]]
+          assert sem_ids(novo) == sem_ids(antigo), "Rode python sistema/n8n/build_workflow.py e faça commit do JSON"
+          PY
+      - run: node sistema/lib/test_matcher.js
+      - run: node sistema/n8n/test_captacao.js
+      - run: node sistema/n8n/test_harness.js
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r sistema/worker/requirements.txt
+      - run: python -m unittest discover -s tests -v
+        working-directory: sistema/worker
+
+  instalacao-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sobe a pilha completa (n8n + worker), como o instalador faz
+        working-directory: instalar
+        run: |
+          mkdir -p "$RUNNER_TEMP/LICITACOES"
+          printf 'LICITACOES_HOST_DIR=%s\nN8N_ENCRYPTION_KEY=%s\nN8N_PORTA=5678\nWORKER_USUARIO=%s\n' \
+            "$RUNNER_TEMP/LICITACOES" "$(openssl rand -hex 32)" "$(id -u):$(id -g)" > .env
+          docker compose --env-file .env up -d --build
+          for i in $(seq 1 60); do curl -fs http://localhost:5678/healthz && curl -fs http://localhost:8765/health && break; sleep 3; done
+          curl -fs http://localhost:8765/health | grep '"gravavel":true'
+      - name: Importa o fluxo no n8n
+        run: |
+          docker cp sistema/n8n/LICITACOES_PNCP_IA.json licitacoes-n8n:/tmp/fluxo.json
+          docker exec licitacoes-n8n n8n import:workflow --input=/tmp/fluxo.json
+          docker exec licitacoes-n8n n8n list:workflow | grep "Licitações PNCP IA"
+      - name: O n8n alcança o worker pela rede interna
+        run: docker exec licitacoes-n8n wget -qO- http://licitacoes-worker:8765/health
+      - name: Worker gera relatório Excel
+        run: |
+          curl -fs -X POST http://localhost:8765/relatorio -H 'Content-Type: application/json' -d @sistema/testes/payload_relatorio.json | tee /tmp/r.json
+          grep '"qtd":4' /tmp/r.json
+          ls "$RUNNER_TEMP/LICITACOES/_RELATORIOS"
+      - if: failure()
+        run: docker logs --tail 100 licitacoes-worker; docker logs --tail 100 licitacoes-n8n

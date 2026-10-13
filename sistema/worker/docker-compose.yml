@@ -1,0 +1,18 @@
+# licitacoes-pncp-ia — worker isolado (pastas, downloads, Excel, propostas e servidor MCP).
+# Normalmente quem sobe o worker é o instalador (instalar/docker-compose.yml). Use este arquivo para desenvolvimento:
+#   docker compose up -d --build        (nesta pasta)  ->  http://localhost:8765/health
+services:
+  licitacoes-worker:
+    build: .
+    container_name: licitacoes-worker
+    restart: unless-stopped
+    environment:
+      - LICITACOES_ROOT=/data/LICITACOES
+      - TZ=America/Sao_Paulo
+      - MCP_PORT=8766
+    ports:
+      - "127.0.0.1:8765:8765"   # API chamada pelo n8n
+      - "127.0.0.1:8766:8766"   # servidor MCP (http://localhost:8766/mcp)
+    volumes:
+      # Pasta de dados no seu computador (padrão: ./dados ao lado deste arquivo)
+      - ${LICITACOES_HOST_DIR:-./dados}:/data/LICITACOES
