@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "ecf7c41a-aeda-4282-aa64-23715a49ff03",
+      "id": "18ae07fa-4d16-5d87-9f1f-038426211b17",
       "name": "Executar manualmente",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -23,7 +23,7 @@
           ]
         }
       },
-      "id": "6bd81606-c139-4cb5-b0be-930534f106bb",
+      "id": "aef21fb5-edde-523e-ba19-1a9ca1b78206",
       "name": "Dias 1 e 16 · 07:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -36,7 +36,7 @@
       "parameters": {
         "jsCode": "// ===================== CONFIGURAÇÃO GERAL =====================\n// Edite apenas este bloco. Todo o restante do fluxo lê daqui.\nconst CONFIG = {\n  ufs: ['SP', 'MG', 'PR', 'GO', 'SC', 'MS'], // UFs pesquisadas no PNCP (qualquer uma das 27)\n  diasAteInicio: 3,          // execução em 11/10 -> janela começa em 14/10 (o dia da execução não conta)\n  diasJanela: 15,            // 14/10 a 28/10 (15 dias corridos)\n  diasAgendados: [1, 16],    // dias do mês do agendamento (nó \"Dias 1 e 16 · 07:00\")\n  dataExecucao: null,        // null = hoje. Para reprocessar: '2026-10-11'\n  tamanhoPagina: 50,          // máximo aceito pelo PNCP\n  pncp: {\n    pausaEntrePaginasMs: 1500, // ritmo que o PNCP tolera sem bloquear o IP\n    esperasSegundos: [15, 30, 60, 60, 90, 120, 180, 300], // espera progressiva após HTTP 429/5xx\n  },\n  // Envio do relatório: um arquivo por destinatário, só com as UFs dele. Separe vários e-mails por vírgula.\n  remetente: 'Seu Nome <seu-email@exemplo.com.br>',  // precisa ser a mesma conta da credencial SMTP\n  assinatura: 'Seu Nome<br>Analista de Licitações · Sua Empresa',\n  envios: [\n    { para: 'licitacao@exemplo.com.br', ufs: ['SP', 'MG', 'PR', 'GO', 'SC', 'MS'] },\n    // { para: 'vendas-sp@exemplo.com.br', ufs: ['SP'] },\n  ],\n  workerUrl: 'http://licitacoes-worker:8765', // worker da mesma pilha Docker (n8n fora do Docker: http://localhost:8765)\n  // Dados da sua empresa: entram na proposta prévia e nas declarações. Campo vazio sai destacado em amarelo.\n  empresa: {\n    nome: 'Sua Empresa',\n    razao_social: 'SUA EMPRESA LTDA',\n    nome_fantasia: '',\n    cnpj: '',\n    ie: '',\n    im: '',\n    endereco: '',\n    bairro: '',\n    municipio_uf: '',\n    cep: '',\n    cidade_assinatura: '',\n    telefone: '',\n    email: '',\n    vendedor: '',\n    rubrica: '',\n    representante: { nome: '', rg: '', cpf: '', cargo: '', estado_civil: '', emails: '' },\n    // Usados na proposta quando o edital não define (saem destacados em amarelo para conferência)\n    padroes: { validade_proposta: '60 (sessenta) dias', condicao_pagamento: '30 dias', prazo_entrega: '20 dias' },\n    cnaePrincipal: '46.45-1-01 — Comércio atacadista de instrumentos e materiais para uso médico, cirúrgico, hospitalar e de laboratórios',\n    cnaeSecundario: '',\n    // Descreva o que a empresa vende: a IA usa este texto para decidir o que é oportunidade.\n    portfolio: 'Reagentes e kits para diagnóstico in vitro (bioquímica, hematologia, coagulação, imunologia, microbiologia, testes rápidos), meios de cultura, tubos de coleta de sangue a vácuo, plásticos e vidrarias de laboratório, consumíveis e pequenos equipamentos laboratoriais.',\n    // Regras da triagem por IA (ALTA / MEDIA / BAIXA / DESCARTAR). Ajuste ao seu ramo.\n    criteriosTriagem: `- ALTA: objeto é essencialmente reagentes, insumos, materiais ou equipamentos de laboratório ou diagnóstico.\n- MEDIA: objeto amplo (material médico-hospitalar, insumos de saúde) que provavelmente contém itens do portfólio.\n- BAIXA: aderência remota, poucos itens possíveis.\n- DESCARTAR: claramente fora do portfólio (obras, serviços, alimentos, veículos, medicamentos etc.): falso positivo do filtro por palavra-chave.\nAtenção: \"exames laboratoriais\" como SERVIÇO terceirizado é DESCARTAR, salvo se houver comodato ou fornecimento de reagentes.`,\n  },\n  ia: {\n    // Modelos configuráveis (os nomes mudam com o tempo — confira no painel de cada provedor)\n    // Aliases \"-latest\" acompanham o modelo atual do Google (não quebram quando uma versão é aposentada).\n    // Chave gratuita: Pro tem cota ZERO -> usar Flash. Com faturamento ativo no AI Studio: geminiAnalise = 'gemini-pro-latest'.\n    geminiTriagem: 'gemini-flash-latest',\n    geminiAnalise: 'gemini-flash-latest', // usado só se o nó \"Agente Analista · Gemini\" for reativado (exige faturamento)\n    claudeAuditor: 'claude-sonnet-5-5',  // confira o nome atual em docs.claude.com\n    openaiRevisor: 'gpt-5',\n    maxCharsAnalista: 600000,   // ~150 mil tokens\n    maxCharsAuditor: 350000,    // ~90 mil tokens\n    analisarDescartados: false, // true = baixa e analisa até o que a triagem marcou como DESCARTAR\n    // Economia: análise completa (Claude + ChatGPT + cruzamento) só para estas classificações da triagem.\n    // BAIXA continua no relatório, mas sem análise de edital. Para incluir: ['ALTA', 'MEDIA', 'BAIXA', 'NAO_AVALIADO']\n    analisarRelevancias: ['ALTA', 'MEDIA', 'NAO_AVALIADO'],\n    triagemLote: 30,            // processos por chamada de triagem (chave gratuita do Gemini: 20 chamadas/dia por modelo)\n    limiteProcessosAnalise: 200,\n  },\n  // Filtros por palavra-chave (sistema/filtros.json): chave + complementares (opcional) + exclusões\n  filtros: [{\"id\": 1, \"chave\": [\"reagente\", \"reagentes\"], \"exclusoes\": [\"piscina\", \"tratamento de agua\"]}, {\"id\": 2, \"chave\": [\"laboratorio\", \"laboratoriais\", \"laboratorial\"], \"complementares\": [\"material\", \"materiais\", \"insumo\", \"insumos\", \"reagente\", \"vidraria\", \"equipamento\", \"kit\", \"kits\", \"consumo\"], \"exclusoes\": [\"servico de exame\", \"prestacao de servico\", \"obra\", \"reforma\"]}, {\"id\": 3, \"chave\": [\"bioquimica\"]}, {\"id\": 4, \"chave\": [\"hematologia\", \"hematologico\"]}, {\"id\": 5, \"chave\": [\"coagulacao\"]}, {\"id\": 6, \"chave\": [\"imunologia\", \"imunoensaio\", \"imunologico\"]}, {\"id\": 7, \"chave\": [\"microbiologia\", \"microbiologico\"]}, {\"id\": 8, \"chave\": [\"meio de cultura\", \"meios de cultura\", \"agar\"]}, {\"id\": 9, \"chave\": [\"teste rapido\", \"testes rapidos\"]}, {\"id\": 10, \"chave\": [\"diagnostico in vitro\", \"diagnostico laboratorial\", \"kits para diagnostico\", \"kit para diagnostico\", \"kits de diagnostico\"]}, {\"id\": 11, \"chave\": [\"tubo\"], \"complementares\": [\"coleta\", \"vacuo\", \"ensaio\", \"centrifuga\", \"eppendorf\", \"microtubo\"], \"exclusoes\": [\"cola\", \"pvc\", \"esgoto\", \"aco\", \"ferro\", \"galvanizado\"]}, {\"id\": 12, \"chave\": [\"coleta de sangue\", \"coleta a vacuo\", \"coleta de urina\", \"coletor universal\"]}, {\"id\": 13, \"chave\": [\"lamina\", \"laminas\", \"laminula\", \"laminulas\"], \"complementares\": [\"microscopia\", \"microscopio\", \"lamínula\", \"laminula\", \"histologia\"], \"exclusoes\": [\"bisturi\", \"barbear\", \"serra\"]}, {\"id\": 14, \"chave\": [\"cubeta\", \"cubetas\"]}, {\"id\": 15, \"chave\": [\"ponteira\", \"ponteiras\", \"micropipeta\", \"pipeta\", \"pipetas\"]}, {\"id\": 16, \"chave\": [\"vidraria\", \"vidrarias\", \"bequer\", \"proveta\", \"erlenmeyer\", \"placa de petri\"]}, {\"id\": 17, \"chave\": [\"urinalise\", \"tira reagente\", \"tiras reagentes\", \"fita reagente\"]}, {\"id\": 18, \"chave\": [\"gasometria\", \"eletrolitos\", \"glicosimetro\", \"tiras de glicemia\"]}, {\"id\": 19, \"chave\": [\"hemoglobina glicada\", \"pcr ultrassensivel\", \"sorologia\", \"sorologico\"]}, {\"id\": 20, \"chave\": [\"corante\", \"corantes\", \"coloracao\"], \"complementares\": [\"gram\", \"panotico\", \"giemsa\", \"hematologia\", \"microscopia\", \"laboratorio\"], \"exclusoes\": [\"alimento\", \"cabelo\", \"tinta\"]}, {\"id\": 21, \"chave\": [\"analisador\", \"analisadores\"], \"complementares\": [\"bioquimico\", \"hematologico\", \"laboratorio\", \"comodato\", \"imunologico\", \"urina\"]}, {\"id\": 22, \"chave\": [\"comodato\"], \"complementares\": [\"reagente\", \"reagentes\", \"equipamento\", \"analisador\"]}, {\"id\": 23, \"chave\": [\"controle de qualidade\"], \"complementares\": [\"laboratorio\", \"laboratorial\", \"interno\", \"externo\"]}, {\"id\": 24, \"chave\": [\"swab\", \"swabs\"]}],\n  // Situações do PNCP que NÃO são oportunidade (2 revogada, 3 anulada, 4 suspensa)\n  situacoesExcluidas: [2, 3, 4],\n};\n\n// ===================== JANELA DE DATAS =====================\nconst TZ = 'America/Sao_Paulo';\nconst hojeISO = CONFIG.dataExecucao ||\n  new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());\nconst base = new Date(hojeISO + 'T00:00:00Z');\nconst addDias = (d, n) => new Date(d.getTime() + n * 86400000);\nconst ymd = d => d.toISOString().slice(0, 10);\nconst ini = addDias(base, CONFIG.diasAteInicio);\nlet fim = addDias(ini, CONFIG.diasJanela - 1);\n// Agendamento em dias fixos (1 e 16): a janela vai até a véspera do início da próxima execução,\n// para não deixar buraco nos meses de 31 dias nem repetir datas. Execução manual em outro dia: 15 dias.\nconst diaHoje = base.getUTCDate();\nif ((CONFIG.diasAgendados || []).includes(diaHoje)) {\n  const dias = [...CONFIG.diasAgendados].sort((a, b) => a - b);\n  const seguinte = dias.find(d => d > diaHoje);\n  const proxima = seguinte\n    ? new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), seguinte))\n    : new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, dias[0]));\n  fim = addDias(proxima, CONFIG.diasAteInicio - 1);\n}\nconst br = d => ymd(d).split('-').reverse().join('/');\n\nreturn [{\n  json: {\n    ...CONFIG,\n    execucao: hojeISO,\n    janela: {\n      inicio: ymd(ini) + 'T00:00:00',\n      fim: ymd(fim) + 'T23:59:59',\n      dataFinalPNCP: ymd(fim).replace(/-/g, ''),\n      rotulo: `${br(ini)} a ${br(fim)}`,\n    },\n  },\n}];\n"
       },
-      "id": "894c3d45-5d64-4418-a84a-7b387f5e9db0",
+      "id": "eaaa8a70-1430-5041-a013-489418ef7cd8",
       "name": "Configuração",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -49,7 +49,7 @@
       "parameters": {
         "jsCode": "// Fila inicial: página 1 de cada UF (descobre quantas páginas existem).\nconst cfg = $('Configuração').first().json;\nreturn cfg.ufs.map(uf => ({ json: { uf, pagina: 1, tentativa: 0 } }));\n"
       },
-      "id": "193e228e-90a1-4508-823f-8b3704952b31",
+      "id": "6fa45a6d-7f5e-52b5-9061-55f85f8a94b5",
       "name": "Fila · página 1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -62,7 +62,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "f3bdcf5b-848b-4f0d-ae68-94cb42f1a40a",
+      "id": "f98c40c9-3e1b-5d9a-b721-dc1c05da4a71",
       "name": "Loop · página 1",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -76,7 +76,7 @@
         "jsCode": "// Consulta UMA página do PNCP com controle de taxa e já aplica janela + situação + filtros por palavra-chave.\n// Se o PNCP devolver 429/5xx/timeout, marca \"repetir\" com espera progressiva (nó Aguardar) — sem perder a página.\nfunction normalizar(txt) {\n  return String(txt || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()\n    .replace(/[^a-z0-9\\-\\/ ]+/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction termoParaRegex(termo, exato) {\n  const partes = normalizar(termo).split(' ').filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\\]\\\\\\/-]/g, '\\\\$&'));\n  if (!partes.length) return null;\n  return new RegExp('(?:^|[^a-z0-9])' + partes.join('(?:\\\\s+[a-z]{1,4}){0,2}\\\\s+') + (exato ? '(?![a-z0-9])' : ''), 'i');\n}\nfunction compilar(filtros) {\n  const c = (r, ex) => (r || []).map(t => ({ t, re: termoParaRegex(t, ex) })).filter(x => x.re);\n  return filtros.map(f => ({ id: f.id, chave: c(f.chave, f.exato), comp: c(f.complementares), excl: c(f.exclusoes) }));\n}\nfunction avaliar(texto, comp) {\n  const n = ' ' + normalizar(texto) + ' ';\n  const hits = [], termos = new Set();\n  for (const f of comp) {\n    const k = f.chave.find(x => x.re.test(n));\n    if (!k) continue;\n    let c = null;\n    if (f.comp.length) { c = f.comp.find(x => x.re.test(n)); if (!c) continue; }\n    if (f.excl.some(x => x.re.test(n))) continue;\n    hits.push(f.id);\n    termos.add(k.t + (c ? ' + ' + c.t : ''));\n  }\n  return { ok: hits.length > 0, filtros: hits, termos: [...termos] };\n}\n\nconst cfg = $('Configuração').first().json;\nconst q = $input.item.json;\nconst tentativa = (q.tentativa || 0) + 1;\nawait new Promise(r => setTimeout(r, cfg.pncp.pausaEntrePaginasMs));\n\nlet status = 0, body = null, erro = null;\ntry {\n  const r = await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://pncp.gov.br/api/consulta/v1/contratacoes/proposta',\n    qs: { dataFinal: cfg.janela.dataFinalPNCP, uf: q.uf, pagina: q.pagina, tamanhoPagina: cfg.tamanhoPagina },\n    headers: { Accept: 'application/json' },\n    json: true, returnFullResponse: true, ignoreHttpStatusErrors: true, timeout: 90000,\n  });\n  status = r.statusCode;\n  body = r.body;\n} catch (e) {\n  erro = e.message;\n}\n\nif (!(status === 200 || status === 204)) {\n  const pode = tentativa < cfg.pncp.esperasSegundos.length + 1;\n  return { json: {\n    uf: q.uf, pagina: q.pagina, tentativa, status, erro: erro || (typeof body === 'string' ? body.slice(0, 120) : null),\n    repetir: pode, espera: cfg.pncp.esperasSegundos[Math.min(tentativa - 1, cfg.pncp.esperasSegundos.length - 1)],\n    falhou: !pode, matches: [], lidos: 0, naJanela: 0, totalPaginas: 0,\n  } };\n}\n\nconst dados = (body && body.data) || [];\nconst comp = compilar(cfg.filtros);\nconst ufsAlvo = new Set(cfg.ufs);\nlet naJanela = 0;\nconst matches = [];\nfor (const x of dados) {\n  const uf = x.unidadeOrgao && x.unidadeOrgao.ufSigla;\n  const fim = x.dataEncerramentoProposta || '';\n  if (!ufsAlvo.has(uf)) continue;\n  if (fim < cfg.janela.inicio || fim > cfg.janela.fim) continue;\n  if (cfg.situacoesExcluidas.includes(Number(x.situacaoCompraId))) continue;\n  naJanela++;\n  const r = avaliar(`${x.objetoCompra || ''} ${x.informacaoComplementar || ''}`, comp);\n  if (!r.ok) continue;\n  const cnpj = x.orgaoEntidade.cnpj;\n  matches.push({\n    numeroControlePNCP: x.numeroControlePNCP, uf, municipio: x.unidadeOrgao.municipioNome,\n    orgao: x.orgaoEntidade.razaoSocial, unidade: x.unidadeOrgao.nomeUnidade, cnpj,\n    anoCompra: x.anoCompra, sequencialCompra: x.sequencialCompra, numeroCompra: x.numeroCompra, processo: x.processo,\n    objetoCompra: (x.objetoCompra || '').trim(), informacaoComplementar: x.informacaoComplementar,\n    dataAberturaProposta: x.dataAberturaProposta, dataEncerramentoProposta: x.dataEncerramentoProposta,\n    modalidadeId: x.modalidadeId, modalidadeNome: x.modalidadeNome, modoDisputaNome: x.modoDisputaNome,\n    srp: x.srp, valorTotalEstimado: x.valorTotalEstimado, amparoLegal: x.amparoLegal && x.amparoLegal.nome,\n    situacaoCompraNome: x.situacaoCompraNome, usuarioNome: x.usuarioNome, linkSistemaOrigem: x.linkSistemaOrigem || null,\n    link_pncp: `https://pncp.gov.br/app/editais/${cnpj}/${x.anoCompra}/${x.sequencialCompra}`,\n    termos: r.termos, filtros: r.filtros,\n  });\n}\nreturn { json: {\n  uf: q.uf, pagina: q.pagina, tentativa, status, repetir: false, falhou: false,\n  totalPaginas: (body && body.totalPaginas) || 0, lidos: dados.length, naJanela, matches,\n} };\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "0c5a8f67-be8d-4d8f-b350-2b22559fcf67",
+      "id": "95c393bc-bfbd-557e-a79a-b5f9a9a789dc",
       "name": "PNCP · consultar página 1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -95,7 +95,7 @@
           },
           "conditions": [
             {
-              "id": "a79c1849-1673-4451-afd1-67fae53ffaf0",
+              "id": "a9166dea-a02c-5cd7-99ed-629deceacf19",
               "leftValue": "={{ $json.repetir }}",
               "rightValue": "",
               "operator": {
@@ -109,7 +109,7 @@
         },
         "options": {}
       },
-      "id": "17eac845-2df1-4cb4-a84f-547cecd611f4",
+      "id": "4bb140ea-6d68-5677-af17-2522f44ca020",
       "name": "Repetir? (p1)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -124,7 +124,7 @@
         "amount": "={{ $json.espera }}",
         "unit": "seconds"
       },
-      "id": "6dc1ed40-49e1-4914-8193-c784c2ff8944",
+      "id": "c2e1f7d4-3d13-5aa7-81a3-587a01e4ebf6",
       "name": "Aguardar (p1)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -132,13 +132,13 @@
         1140,
         520
       ],
-      "webhookId": "69778a03-e552-4b72-bc10-7056f61cc13c"
+      "webhookId": "1825b141-df9c-5252-ae81-df3afc392795"
     },
     {
       "parameters": {
         "jsCode": "// Com as páginas 1 em mãos, gera a fila das páginas 2..N de cada UF.\n// O resultado das páginas 1 viaja no primeiro item (p1) para a consolidação.\nconst p1 = $input.all().map(i => i.json);\nconst fila = [];\nfor (const r of p1) {\n  for (let p = 2; p <= (r.totalPaginas || 0); p++) fila.push({ uf: r.uf, pagina: p, tentativa: 0 });\n}\nif (!fila.length) fila.push({ sentinela: true });\nfila[0].p1 = p1;\nreturn fila.map(j => ({ json: j }));\n"
       },
-      "id": "cc83ea18-fbb4-405b-9bb3-049282193d3e",
+      "id": "c6ba7001-a83e-5da5-bef5-51def49bf89f",
       "name": "Fila · demais páginas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -151,7 +151,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "e971d5a5-358c-4512-8b61-e98bf34738e7",
+      "id": "a21946ee-b32f-570e-bd48-45a045815606",
       "name": "Loop · demais páginas",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -165,7 +165,7 @@
         "jsCode": "// Consulta UMA página do PNCP com controle de taxa e já aplica janela + situação + filtros por palavra-chave.\n// Se o PNCP devolver 429/5xx/timeout, marca \"repetir\" com espera progressiva (nó Aguardar) — sem perder a página.\nfunction normalizar(txt) {\n  return String(txt || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()\n    .replace(/[^a-z0-9\\-\\/ ]+/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction termoParaRegex(termo, exato) {\n  const partes = normalizar(termo).split(' ').filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\\]\\\\\\/-]/g, '\\\\$&'));\n  if (!partes.length) return null;\n  return new RegExp('(?:^|[^a-z0-9])' + partes.join('(?:\\\\s+[a-z]{1,4}){0,2}\\\\s+') + (exato ? '(?![a-z0-9])' : ''), 'i');\n}\nfunction compilar(filtros) {\n  const c = (r, ex) => (r || []).map(t => ({ t, re: termoParaRegex(t, ex) })).filter(x => x.re);\n  return filtros.map(f => ({ id: f.id, chave: c(f.chave, f.exato), comp: c(f.complementares), excl: c(f.exclusoes) }));\n}\nfunction avaliar(texto, comp) {\n  const n = ' ' + normalizar(texto) + ' ';\n  const hits = [], termos = new Set();\n  for (const f of comp) {\n    const k = f.chave.find(x => x.re.test(n));\n    if (!k) continue;\n    let c = null;\n    if (f.comp.length) { c = f.comp.find(x => x.re.test(n)); if (!c) continue; }\n    if (f.excl.some(x => x.re.test(n))) continue;\n    hits.push(f.id);\n    termos.add(k.t + (c ? ' + ' + c.t : ''));\n  }\n  return { ok: hits.length > 0, filtros: hits, termos: [...termos] };\n}\n\nconst cfg = $('Configuração').first().json;\nconst q = $input.item.json;\nconst tentativa = (q.tentativa || 0) + 1;\nawait new Promise(r => setTimeout(r, cfg.pncp.pausaEntrePaginasMs));\n\nlet status = 0, body = null, erro = null;\ntry {\n  const r = await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://pncp.gov.br/api/consulta/v1/contratacoes/proposta',\n    qs: { dataFinal: cfg.janela.dataFinalPNCP, uf: q.uf, pagina: q.pagina, tamanhoPagina: cfg.tamanhoPagina },\n    headers: { Accept: 'application/json' },\n    json: true, returnFullResponse: true, ignoreHttpStatusErrors: true, timeout: 90000,\n  });\n  status = r.statusCode;\n  body = r.body;\n} catch (e) {\n  erro = e.message;\n}\n\nif (!(status === 200 || status === 204)) {\n  const pode = tentativa < cfg.pncp.esperasSegundos.length + 1;\n  return { json: {\n    uf: q.uf, pagina: q.pagina, tentativa, status, erro: erro || (typeof body === 'string' ? body.slice(0, 120) : null),\n    repetir: pode, espera: cfg.pncp.esperasSegundos[Math.min(tentativa - 1, cfg.pncp.esperasSegundos.length - 1)],\n    falhou: !pode, matches: [], lidos: 0, naJanela: 0, totalPaginas: 0,\n  } };\n}\n\nconst dados = (body && body.data) || [];\nconst comp = compilar(cfg.filtros);\nconst ufsAlvo = new Set(cfg.ufs);\nlet naJanela = 0;\nconst matches = [];\nfor (const x of dados) {\n  const uf = x.unidadeOrgao && x.unidadeOrgao.ufSigla;\n  const fim = x.dataEncerramentoProposta || '';\n  if (!ufsAlvo.has(uf)) continue;\n  if (fim < cfg.janela.inicio || fim > cfg.janela.fim) continue;\n  if (cfg.situacoesExcluidas.includes(Number(x.situacaoCompraId))) continue;\n  naJanela++;\n  const r = avaliar(`${x.objetoCompra || ''} ${x.informacaoComplementar || ''}`, comp);\n  if (!r.ok) continue;\n  const cnpj = x.orgaoEntidade.cnpj;\n  matches.push({\n    numeroControlePNCP: x.numeroControlePNCP, uf, municipio: x.unidadeOrgao.municipioNome,\n    orgao: x.orgaoEntidade.razaoSocial, unidade: x.unidadeOrgao.nomeUnidade, cnpj,\n    anoCompra: x.anoCompra, sequencialCompra: x.sequencialCompra, numeroCompra: x.numeroCompra, processo: x.processo,\n    objetoCompra: (x.objetoCompra || '').trim(), informacaoComplementar: x.informacaoComplementar,\n    dataAberturaProposta: x.dataAberturaProposta, dataEncerramentoProposta: x.dataEncerramentoProposta,\n    modalidadeId: x.modalidadeId, modalidadeNome: x.modalidadeNome, modoDisputaNome: x.modoDisputaNome,\n    srp: x.srp, valorTotalEstimado: x.valorTotalEstimado, amparoLegal: x.amparoLegal && x.amparoLegal.nome,\n    situacaoCompraNome: x.situacaoCompraNome, usuarioNome: x.usuarioNome, linkSistemaOrigem: x.linkSistemaOrigem || null,\n    link_pncp: `https://pncp.gov.br/app/editais/${cnpj}/${x.anoCompra}/${x.sequencialCompra}`,\n    termos: r.termos, filtros: r.filtros,\n  });\n}\nreturn { json: {\n  uf: q.uf, pagina: q.pagina, tentativa, status, repetir: false, falhou: false,\n  totalPaginas: (body && body.totalPaginas) || 0, lidos: dados.length, naJanela, matches,\n} };\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "18286490-7a21-4d5b-a6f2-996f88bd505d",
+      "id": "6d5ac81a-4c23-584d-9cfe-47946617cb58",
       "name": "PNCP · consultar demais páginas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -184,7 +184,7 @@
           },
           "conditions": [
             {
-              "id": "0caa2b56-0773-46d2-b408-dcea5c40151b",
+              "id": "ce3ee492-7ee5-5e29-a4a2-fb20f085cb49",
               "leftValue": "={{ $json.repetir }}",
               "rightValue": "",
               "operator": {
@@ -198,7 +198,7 @@
         },
         "options": {}
       },
-      "id": "b15aa29c-11f2-43e8-adf6-90f18dc6cb52",
+      "id": "7773de24-1489-5437-804f-eee539589b37",
       "name": "Repetir? (demais)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -213,7 +213,7 @@
         "amount": "={{ $json.espera }}",
         "unit": "seconds"
       },
-      "id": "cd11df66-5cf9-4a7d-b11b-57eeb9034556",
+      "id": "819445ed-1f15-529b-9907-8fca2e7bdef3",
       "name": "Aguardar (demais)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -221,7 +221,7 @@
         1580,
         340
       ],
-      "webhookId": "2fe9b2ea-f9c5-45a7-abb3-6bd35900663e"
+      "webhookId": "5eaafcdd-fc92-55af-b423-9366086d02bb"
     },
     {
       "parameters": {
@@ -233,7 +233,7 @@
           },
           "conditions": [
             {
-              "id": "feacb912-330f-4c67-b40c-db04070b521c",
+              "id": "aac2e61b-98d4-5d78-b41f-4a620dc306f6",
               "leftValue": "={{ !!$json.sentinela }}",
               "rightValue": "",
               "operator": {
@@ -247,7 +247,7 @@
         },
         "options": {}
       },
-      "id": "86813c95-a198-4b46-b2da-c7962aca4391",
+      "id": "dcb8cd15-04ea-5c5b-9d53-25c52145815b",
       "name": "É sentinela? (demais)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -260,7 +260,7 @@
       "parameters": {
         "jsCode": "// Junta os resultados de todas as páginas (página 1 + demais), remove duplicidades e gera estatísticas.\nconst p1 = $('Fila · demais páginas').first().json.p1 || [];\nconst demais = $input.all().map(i => i.json).filter(j => !j.sentinela);\nconst paginas = [...p1, ...demais];\n\nconst vistos = new Map();\nlet lidos = 0, naJanela = 0;\nconst falhas = [];\nfor (const pg of paginas) {\n  if (pg.falhou) { falhas.push(`${pg.uf} p.${pg.pagina} (HTTP ${pg.status}${pg.erro ? ' · ' + pg.erro : ''})`); continue; }\n  lidos += pg.lidos || 0;\n  naJanela += pg.naJanela || 0;\n  for (const m of pg.matches || []) if (!vistos.has(m.numeroControlePNCP)) vistos.set(m.numeroControlePNCP, m);\n}\nconst selecionados = [...vistos.values()].sort((a, b) => a.dataEncerramentoProposta.localeCompare(b.dataEncerramentoProposta));\nconst estatisticas = {\n  paginasConsultadas: paginas.length, registrosLidos: lidos, naJanela,\n  selecionados: selecionados.length, paginasComErro: falhas.length, errosAmostra: falhas.slice(0, 8),\n};\nif (!selecionados.length) return [{ json: { vazio: true, estatisticas } }];\nreturn selecionados.map(s => ({ json: { ...s, estatisticas } }));\n"
       },
-      "id": "ed9fef6f-15db-4e75-87f4-7a087ed53f7d",
+      "id": "80381f3a-8cdc-58ba-b4d9-394e287318dc",
       "name": "Consolidar + Filtros",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -279,7 +279,7 @@
           },
           "conditions": [
             {
-              "id": "32bd56b5-9b88-49c5-ab19-504bca5addd5",
+              "id": "e1574291-bb83-5537-8e86-14dc3b86ebdc",
               "leftValue": "={{ !$json.vazio }}",
               "rightValue": "",
               "operator": {
@@ -293,7 +293,7 @@
         },
         "options": {}
       },
-      "id": "27f3bdef-4fe6-4a72-a4fb-de0346a3f156",
+      "id": "023c0d37-495b-5dbd-b1e4-00dfa2aca62f",
       "name": "Há oportunidades?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -306,7 +306,7 @@
       "parameters": {
         "jsCode": "// AGENTE 1 — TRIAGEM (Gemini Flash, chave gratuita): classifica a aderência dos processos EM LOTES.\n// A chave gratuita permite ~20 chamadas/dia por modelo: lotes de 30 processos = ~6 chamadas por execução.\nconst cfg = $('Configuração').first().json;\nconst itens = $input.all().map(i => i.json).filter(j => !j.vazio);\nconst TAM = (cfg.ia && cfg.ia.triagemLote) || 30;\n\nconst e = cfg.empresa;\nconst system = `Você é analista sênior de licitações públicas (Lei 14.133/2021) de uma empresa fornecedora.\nEmpresa: ${e.nome}.${e.cnaePrincipal ? ` CNAE principal ${e.cnaePrincipal}.` : ''}${e.cnaeSecundario ? ` CNAE secundário ${e.cnaeSecundario}.` : ''}\nPortfólio: ${e.portfolio}\nTarefa: para cada processo, decidir se vale a pena a empresa analisar o edital.\nCritérios:\n${e.criteriosTriagem}\nUse exatamente o \"id\" recebido. Responda SOMENTE JSON: {\"resultados\":[{\"id\":0,\"relevancia\":\"ALTA|MEDIA|BAIXA|DESCARTAR\",\"motivo\":\"até 25 palavras\"}]}`;\n\nconst lotes = [];\nfor (let ini = 0; ini < itens.length; ini += TAM) {\n  const lista = itens.slice(ini, ini + TAM).map((p, k) => ({\n    id: ini + k, // id global: permite juntar os lotes depois\n    orgao: p.orgao,\n    modalidade: p.modalidadeNome,\n    objeto: (p.objetoCompra || '').slice(0, 900),\n    complemento: (p.informacaoComplementar || '').slice(0, 300),\n    termos_encontrados: p.termos,\n  }));\n  lotes.push({\n    json: {\n      lote: lotes.length + 1, ids: [ini, ini + lista.length - 1], qtd: lista.length,\n      body: {\n        systemInstruction: { parts: [{ text: system }] },\n        contents: [{ role: 'user', parts: [{ text: JSON.stringify(lista) }] }],\n        generationConfig: { temperature: 0, responseMimeType: 'application/json', maxOutputTokens: 16384 },\n      },\n      modelo: cfg.ia.geminiTriagem,\n    },\n  });\n}\nreturn lotes.length ? lotes : [{ json: { lote: 0, qtd: 0, vazio: true, body: {}, modelo: cfg.ia.geminiTriagem } }];\n"
       },
-      "id": "24e0ffa1-9067-4eac-8b29-99934b980fd5",
+      "id": "3534cff6-2ba3-5d12-8e3f-1d5354e7f46d",
       "name": "Montar prompt · Triagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -334,7 +334,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "51127d92-06c7-4b41-a2d8-82a497b9ef69",
+      "id": "bf2940bd-73ad-5982-8b21-75011cb447f7",
       "name": "Agente Triagem · Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -356,7 +356,7 @@
       "parameters": {
         "jsCode": "// Junta as respostas dos lotes da triagem. Lote que falhar NÃO descarta nada (fail-open): seus processos seguem\n// para análise como NAO_AVALIADO e o aviso vai para o relatório.\nconst itens = $('Consolidar + Filtros').all().map(i => i.json).filter(j => !j.vazio);\nconst cfg = $('Configuração').first().json;\nconst mapa = {};\nconst falhas = [];\nconst respostas = $input.all().map(i => i.json || {});\nrespostas.forEach((resp, n) => {\n  try {\n    if (resp.error) throw new Error(JSON.stringify(resp.error).slice(0, 160));\n    const txt = resp.candidates[0].content.parts.map(p => p.text || '').join('');\n    const dados = JSON.parse(txt.replace(/^```json\\s*|```$/g, ''));\n    for (const r of dados.resultados || []) mapa[r.id] = r;\n  } catch (e) {\n    falhas.push(`lote ${n + 1}: ${e.message}`);\n  }\n});\nconst aviso = falhas.length\n  ? `Triagem por IA incompleta (${falhas.length} de ${respostas.length} lote(s) falharam) — os processos desses lotes seguem para análise sem classificação. ${falhas[0]}`\n  : null;\nconst niveis = (cfg.ia && cfg.ia.analisarRelevancias) || ['ALTA', 'MEDIA', 'NAO_AVALIADO'];\nreturn itens.map((p, i) => {\n  const t = mapa[i];\n  const relevancia = t ? String(t.relevancia).toUpperCase().replace('MÉDIA', 'MEDIA') : 'NAO_AVALIADO';\n  return {\n    json: {\n      ...p,\n      relevancia_triagem: relevancia,\n      motivo_triagem: t ? t.motivo : null,\n      aviso_triagem: aviso,\n      analisar: cfg.ia.analisarDescartados || niveis.includes(relevancia),\n    },\n  };\n});\n"
       },
-      "id": "81b0db1c-508f-47bd-86e8-6a5196f0b763",
+      "id": "7fa7b823-beff-575a-ab4e-4d8951a9202c",
       "name": "Aplicar triagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -369,7 +369,7 @@
       "parameters": {
         "jsCode": "// Separa os processos que terão edital baixado e analisado. Nunca devolve lista vazia (o loop precisa rodar\n// para que o relatório seja gerado mesmo quando nada for analisado).\nconst cfg = $('Configuração').first().json;\nconst ordem = { ALTA: 0, MEDIA: 1, NAO_AVALIADO: 2, BAIXA: 3, DESCARTAR: 4 };\nconst sel = $input.all().map(i => i.json)\n  .filter(p => p.analisar)\n  .sort((a, b) => (ordem[a.relevancia_triagem] ?? 9) - (ordem[b.relevancia_triagem] ?? 9))\n  .slice(0, cfg.ia.limiteProcessosAnalise);\nif (!sel.length) return [{ json: { sentinela: true } }];\nreturn sel.map(j => ({ json: j }));\n"
       },
-      "id": "e0ecb276-06a6-4869-995a-f23e5939fc95",
+      "id": "e1cbabd0-782b-5964-959f-b9c7b49088d4",
       "name": "Selecionar para análise",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -382,7 +382,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "28288716-5b59-4c09-8c39-516bed0392ad",
+      "id": "b551e1d4-eabc-554c-9244-e5a3b01a5a91",
       "name": "Loop · processos",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -401,7 +401,7 @@
           },
           "conditions": [
             {
-              "id": "3cd98d7f-eb85-4619-b7ea-e97fe3700b2f",
+              "id": "4158e70f-f420-57b3-a393-ccbd8b972732",
               "leftValue": "={{ !$json.sentinela }}",
               "rightValue": "",
               "operator": {
@@ -415,7 +415,7 @@
         },
         "options": {}
       },
-      "id": "5dd5b1c4-fe45-42d2-a248-dc66af36baeb",
+      "id": "e6bb19ac-4eda-524c-8cd9-9e0a323a3246",
       "name": "É item real?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -435,7 +435,7 @@
           "timeout": 600000
         }
       },
-      "id": "981249c8-f6d2-416d-b31c-5a3ac628e4f6",
+      "id": "5df92d30-660b-5279-ada6-7bbae71f77d2",
       "name": "Worker · pastas + downloads",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -453,7 +453,7 @@
         "jsCode": "// AGENTE 2 — ANALISTA DE EDITAL (Gemini Pro, contexto longo): leitura integral e extração estruturada com citação de fonte.\nconst cfg = $('Configuração').first().json;\nconst rec = $('Loop · processos').item.json;\nconst doc = $input.item.json;\n\nconst ESQUEMA = `{\n  \"resumo\": \"3-5 linhas: o que é comprado, como, para quem\",\n  \"relevancia\": \"ALTA|MEDIA|BAIXA|DESCARTAR\",\n  \"justificativa_relevancia\": \"por que, citando itens\",\n  \"prazos\": {\n    \"validade_proposta\": {\"valor\": \"...\", \"fonte\": \"arquivo · pág. · cláusula\"},\n    \"validade_produtos\": {\"valor\": \"validade mínima exigida na entrega (ex.: 12 meses ou 75% do prazo)\", \"fonte\": \"...\"},\n    \"prazo_entrega\": {\"valor\": \"prazo após recebimento do empenho/OF/AF\", \"fonte\": \"...\"},\n    \"prazo_pagamento\": {\"valor\": \"...\", \"fonte\": \"...\"},\n    \"vigencia_ata_contrato\": {\"valor\": \"...\", \"fonte\": \"...\"},\n    \"local_entrega\": {\"valor\": \"...\", \"fonte\": \"...\"}\n  },\n  \"garantias_e_custos\": {\n    \"garantia_proposta\": {\"valor\": \"Exigida? %? (art. 58)\", \"fonte\": \"...\"},\n    \"garantia_contratual\": {\"valor\": \"Exigida? % (art. 96-98)\", \"fonte\": \"...\"},\n    \"pagamento_antecipado\": {\"valor\": \"taxas, custos de amostra, frete, pagamento antecipado pelo fornecedor\", \"fonte\": \"...\"},\n    \"amostras\": {\"valor\": \"exige amostra/prova de conceito? prazo e local\", \"fonte\": \"...\"},\n    \"visita_tecnica\": {\"valor\": \"...\", \"fonte\": \"...\"},\n    \"exclusividade_me_epp\": {\"valor\": \"exclusivo / cota reservada / ampla\", \"fonte\": \"...\"}\n  },\n  \"habilitacao\": [{\"documento\": \"...\", \"fonte\": \"...\"}],\n  \"exigencias_tecnicas\": [{\"exigencia\": \"registros (ex.: ANVISA), certificações, laudos, catálogo, amostra, comodato...\", \"fonte\": \"...\"}],\n  \"declaracoes\": [{\"nome\": \"Declaração de ...\", \"conteudo\": \"o que precisa declarar\", \"momento\": \"proposta|habilitação|contratação\", \"obrigatoria\": true, \"fonte\": \"arquivo · pág. · cláusula\", \"fundamento\": \"artigo/lei citado\", \"texto_modelo_edital\": \"transcrição INTEGRAL se o edital trouxer modelo; senão vazio\"}],\n  \"itens_aderentes\": [{\"item\": \"nº\", \"descricao\": \"resumo\", \"quantidade\": \"...\", \"comentario\": \"por que é aderente\"}],\n  \"orgao_contato\": {\"endereco\": \"endereço completo do órgão (rua, nº, bairro, CEP, cidade/UF)\", \"telefone\": \"...\", \"site\": \"...\", \"email\": \"...\"},\n  \"itens_edital\": [{\"lote\": \"nº do lote, se houver\", \"numero\": \"nº do item\", \"descricao\": \"especificação COMPLETA do TR/edital (não resuma)\", \"quantidade\": 0, \"unidade\": \"UN/CX/FR/KIT...\", \"valor_unitario_estimado\": 0, \"marca_referencia\": \"marca/modelo citado como referência, se houver\", \"fonte\": \"arquivo · pág.\"}],\n  \"riscos\": [\"...\"],\n  \"pontos_esclarecimento_impugnacao\": [\"cláusula restritiva, marca dirigida, prazo inexequível, exigência sem amparo legal...\"],\n  \"lacunas\": [\"informações que não foram encontradas\"]\n}`;\n\nconst e = cfg.empresa;\nconst system = `Você é um analista sênior de licitações (Lei 14.133/2021) da empresa fornecedora ${e.nome}.\n${[e.cnaePrincipal, e.cnaeSecundario].filter(Boolean).length ? 'CNAEs: ' + [e.cnaePrincipal, e.cnaeSecundario].filter(Boolean).join('; ') + '.' : ''}\nPortfólio: ${e.portfolio}\n\nLeia TODOS os documentos (edital, termo de referência, ETP, anexos, minuta de contrato/ata) e extraia as informações abaixo.\nREGRAS OBRIGATÓRIAS:\n1. Só afirme o que está escrito. Para cada informação, indique a fonte no formato \"arquivo · pág. N · cláusula X.Y\" usando os marcadores [[arquivo | página N]].\n2. Se não encontrar, escreva exatamente \"NÃO HÁ INFORMAÇÃO SUFICIENTE\" no valor e deixe a fonte vazia.\n3. Se edital e TR divergirem, registre AMBOS e aponte a divergência em \"riscos\".\n4. DECLARAÇÕES: varra o documento inteiro — elas costumam estar espalhadas (corpo do edital, habilitação, proposta, TR, anexos, minuta). Liste CADA declaração exigida separadamente, sem fundir duas em uma, inclusive as genéricas (ME/EPP, menor/art. 7º XXXIII CF, inexistência de fato impeditivo, reserva de cargos PcD/reabilitados art. 63 IV, cumprimento de requisitos de habilitação, proposta compatível/exequível, elaboração independente, ciência do edital, vínculo/nepotismo, LGPD etc.). Se houver modelo no edital, transcreva-o integralmente.\n5. Não confunda prazo de entrega da proposta com início da disputa.\n6. ITENS: em \"itens_edital\" liste TODOS os itens do TR/edital (até 150), com a especificação técnica completa, quantidade e unidade exatamente como no documento. Eles serão cruzados com o catálogo da empresa.\nResponda SOMENTE com JSON válido neste esquema:\n${ESQUEMA}`;\n\nconst user = `PROCESSO: ${rec.modalidadeNome} nº ${rec.numeroCompra}/${rec.anoCompra} — Processo ${rec.processo}\nÓRGÃO: ${rec.orgao} (${rec.municipio}/${rec.uf})\nOBJETO: ${rec.objetoCompra}\nENCERRAMENTO DAS PROPOSTAS: ${rec.dataEncerramentoProposta} | SRP: ${rec.srp ? 'Sim' : 'Não'} | Valor estimado: ${rec.valorTotalEstimado}\nITENS (PNCP): ${JSON.stringify((doc.itens || []).slice(0, 150))}\nAVISOS DA COLETA: ${(doc.avisos || []).join(' | ') || 'nenhum'}\n\n===== DOCUMENTOS (texto extraído) =====\n${(doc.texto || '').slice(0, cfg.ia.maxCharsAnalista) || '[nenhum texto disponível — analise apenas com os dados do PNCP e registre a lacuna]'}`;\n\nreturn {\n  json: {\n    pasta_rel: doc.relativo,\n    texto: doc.texto || '',\n    body: {\n      systemInstruction: { parts: [{ text: system }] },\n      contents: [{ role: 'user', parts: [{ text: user }] }],\n      generationConfig: { temperature: 0.1, responseMimeType: 'application/json', maxOutputTokens: 32768 },\n    },\n    modelo: cfg.ia.geminiAnalise,\n  },\n};\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "e2a00b49-425c-43d7-a0c9-d80e97ab5fc2",
+      "id": "84104177-b21a-599f-9d50-37de76cefe8c",
       "name": "Montar prompt · Analista",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -475,7 +475,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "1b6ff1f4-d11c-4276-9d76-4ec2ff8f9759",
+      "id": "17a55411-8297-546f-bba2-8b64653c403b",
       "name": "Agente Analista · Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -500,7 +500,7 @@
         "jsCode": "// AGENTE 3 — AUDITOR (Claude): confere a extração do Analista contra o texto, corrige, completa as declarações\n// e redige modelos de declaração quando o edital não traz modelo.\nfunction lerGemini(r) {\n  if (!r || r.error) throw new Error('Analista falhou: ' + JSON.stringify(r && r.error || r).slice(0, 300));\n  const t = r.candidates[0].content.parts.map(p => p.text || '').join('');\n  return JSON.parse(t.replace(/^```json\\s*|```\\s*$/g, ''));\n}\nconst cfg = $('Configuração').first().json;\nconst rec = $('Loop · processos').item.json;\nconst prep = $('Montar prompt · Analista').item.json;\nlet analista = null, erroAnalista = null;\nconst entrada = $input.item.json || {};\nif (entrada.body && entrada.modelo && !entrada.candidates) {\n  erroAnalista = 'Analista Gemini desativado (chave gratuita) — extração completa feita pelo Auditor';\n} else {\n  try { analista = lerGemini(entrada); } catch (e) { erroAnalista = e.message; }\n}\n\nconst system = `Você é o AUDITOR de uma equipe de análise de editais (Lei 14.133/2021) da empresa fornecedora ${cfg.empresa.nome}. Portfólio: ${cfg.empresa.portfolio}\nOutro agente (Analista) extraiu dados do edital. Sua função:\n1. Conferir CADA campo contra o texto dos documentos. Corrija valores errados, fontes erradas e preencha o que faltou.\n2. Varrer de novo o texto procurando DECLARAÇÕES exigidas que o Analista não listou (procure por \"declara\", \"declaração\", \"anexo\", \"modelo\", \"sob as penas da lei\").\n3. Para cada declaração SEM modelo no edital, redija em \"modelo_sugerido\" um texto formal, objetivo, com os campos [RAZÃO SOCIAL], [CNPJ], [ENDEREÇO], [REPRESENTANTE], fiel à exigência do edital.\n4. Nunca invente cláusulas. Se não houver base no texto, use \"NÃO HÁ INFORMAÇÃO SUFICIENTE\".\n5. Adicione \"auditoria\": {\"confianca\": \"ALTA|MEDIA|BAIXA\", \"divergencias\": [\"o que você corrigiu e por quê\"]}.\nPreserve e confira a lista \"itens_edital\" (todos os itens, especificação completa — não resuma nem corte).\nResponda SOMENTE com o JSON completo e corrigido, no MESMO esquema recebido (mais \"auditoria\" e \"modelo_sugerido\" nas declarações).`;\n\nconst user = `PROCESSO: ${rec.orgao} — ${rec.modalidadeNome} ${rec.numeroCompra}/${rec.anoCompra} — ${rec.objetoCompra}\n\nJSON DO ANALISTA:\n${analista ? JSON.stringify(analista) : 'Não há extração prévia (' + erroAnalista + '). Faça a extração completa você mesmo, no esquema: resumo, relevancia, justificativa_relevancia, prazos{validade_proposta, validade_produtos, prazo_entrega, prazo_pagamento, vigencia_ata_contrato, local_entrega}, garantias_e_custos{garantia_proposta, garantia_contratual, pagamento_antecipado, amostras, visita_tecnica, exclusividade_me_epp} (cada um {valor,fonte}), habilitacao[], exigencias_tecnicas[], declaracoes[{nome,conteudo,momento,obrigatoria,fonte,fundamento,texto_modelo_edital}], itens_aderentes[], orgao_contato{endereco,telefone,site,email}, itens_edital[{lote,numero,descricao,quantidade,unidade,valor_unitario_estimado,marca_referencia,fonte}], riscos[], pontos_esclarecimento_impugnacao[], lacunas[]'}\n\n===== DOCUMENTOS =====\n${prep.texto.slice(0, cfg.ia.maxCharsAuditor) || '[sem texto]'}`;\n\nreturn {\n  json: {\n    analista,\n    erroAnalista,\n    body: {\n      model: cfg.ia.claudeAuditor,\n      max_tokens: 32000,\n      // sem 'temperature': os modelos Claude atuais rejeitam o parâmetro\n      system,\n      messages: [{ role: 'user', content: user }],\n    },\n  },\n};\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "a15e4615-79f9-49e1-96bd-6bbc1f2117a9",
+      "id": "e44fe4ba-648f-5c06-8d65-379746b89666",
       "name": "Montar prompt · Auditor",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -531,7 +531,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "8caced55-b35c-4d70-a046-fead2030533f",
+      "id": "5adff7be-70ef-5002-85fc-2ae81b149a6b",
       "name": "Agente Auditor · Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -554,7 +554,7 @@
         "jsCode": "// Consolida: usa a versão auditada (Claude); se o auditor falhar, mantém a do Analista (Gemini) e registra.\n// Se o nó \"Agente Revisor · ChatGPT\" estiver ativo, a resposta dele chega aqui e é anexada como segunda opinião.\nfunction extrairJSON(txt) {\n  const limpo = String(txt || '').replace(/^```json\\s*|```\\s*$/g, '').trim();\n  const i = limpo.indexOf('{');\n  const j = limpo.lastIndexOf('}');\n  return JSON.parse(limpo.slice(i, j + 1));\n}\nconst rec = $('Loop · processos').item.json;\nconst prep = $('Montar prompt · Auditor').item.json;\nconst r = $input.item.json || {};\nlet final = null;\nconst avisos = [];\n\n// Resposta do Claude (Messages API) — ou do ChatGPT (Chat Completions) se o revisor estiver ligado\ntry {\n  if (r.error) throw new Error(JSON.stringify(r.error).slice(0, 200));\n  if (Array.isArray(r.content)) final = extrairJSON(r.content.filter(c => c.type === 'text').map(c => c.text).join(''));\n  else if (r.choices) final = extrairJSON(r.choices[0].message.content);\n  else throw new Error('resposta sem conteúdo');\n} catch (e) {\n  avisos.push('Auditor indisponível: ' + e.message);\n}\nif (!final && prep.analista) {\n  final = prep.analista;\n  avisos.push('Análise SEM auditoria cruzada — conferir manualmente.');\n}\nif (!final) {\n  final = { resumo: 'Análise automática falhou: ' + (prep.erroAnalista || ''), relevancia: rec.relevancia_triagem, declaracoes: [], lacunas: ['Analisar manualmente'] };\n}\nfinal.auditoria = final.auditoria || {};\nfinal.auditoria.avisos = [...(final.auditoria.avisos || []), ...avisos];\nfinal.relevancia = final.relevancia || rec.relevancia_triagem;\n\nreturn { json: { pasta_rel: $('Montar prompt · Analista').item.json.pasta_rel, rec, analise: final } };\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "a51df15c-2a12-417a-96d3-c7cb3a274e7c",
+      "id": "13e6f873-25ce-5852-b689-53780ad672dd",
       "name": "Consolidar análise",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -576,7 +576,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "a363a7af-f3de-4f79-b575-e0b49d335ad4",
+      "id": "dc51617b-ef52-5fad-9904-18a4c42ef2f0",
       "name": "Agente Revisor · ChatGPT (opcional)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -600,7 +600,7 @@
         "jsCode": "// Aplica a segunda opinião do ChatGPT (opcional). Se o nó do revisor estiver desativado, o item chega intacto.\nconst r = $input.item.json || {};\nconst base = $('Consolidar análise').item.json;\nif (r.analise) return { json: r }; // revisor desativado (pass-through)\nconst out = JSON.parse(JSON.stringify(base));\n// Algumas respostas chegam com acentos corrompidos (\"Declara\\u0000e7\\u0000e3o\"): corrige antes de gravar/gerar Excel\nconst reparar = v => typeof v === 'string' ? v.replace(/\\u0000([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, '')\n  : Array.isArray(v) ? v.map(reparar) : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, reparar(x)])) : v;\ntry {\n  if (r.error) throw new Error(JSON.stringify(r.error).slice(0, 200));\n  const rev = reparar(JSON.parse(String(r.choices[0].message.content).replace(/^```json\\s*|```\\s*$/g, '')));\n  out.analise.auditoria = out.analise.auditoria || {};\n  out.analise.auditoria.revisor_chatgpt = { concorda: rev.concorda, observacoes: rev.observacoes || [] };\n  const nomes = new Set((out.analise.declaracoes || []).map(d => String(d.nome).toLowerCase()));\n  for (const d of rev.declaracoes_faltantes || []) {\n    if (!nomes.has(String(d.nome).toLowerCase())) {\n      out.analise.declaracoes = [...(out.analise.declaracoes || []), { ...d, origem: 'revisor ChatGPT' }];\n    }\n  }\n} catch (e) {\n  out.analise.auditoria = out.analise.auditoria || {};\n  out.analise.auditoria.avisos = [...(out.analise.auditoria.avisos || []), 'Revisor ChatGPT falhou: ' + e.message];\n}\nreturn { json: out };\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "273cdc98-21a5-42d0-9b08-2b20835e4fba",
+      "id": "aac365c2-eca4-5d2b-9d3a-ddd06aaed987",
       "name": "Aplicar revisão",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -620,7 +620,7 @@
           "timeout": 120000
         }
       },
-      "id": "bbddaad7-a7a0-4c95-bc5d-ec0a6259319a",
+      "id": "695234b4-8b87-51fc-9ccc-29bb78037ba1",
       "name": "Worker · candidatos do catálogo",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -638,7 +638,7 @@
         "jsCode": "// AGENTE 5 — CRUZAMENTO (Claude): compara cada item do edital com os candidatos pré-selecionados\n// nas tabelas de preço da empresa (uma por planilha em _CATALOGOS) e escolhe o produto que atende (com o nosso código).\nconst cfg = $('Configuração').first().json;\nconst base = $('Aplicar revisão').item.json;\nconst cand = $input.item.json || {};\nconst itens = (cand.itens || []).filter(i => Object.values(i.candidatos || {}).some(l => (l || []).length));\n\nconst compacto = itens.map(i => ({\n  numero: i.numero, descricao: i.descricao, quantidade: i.quantidade, unidade: i.unidade,\n  valor_unitario_estimado: i.valor_unitario_estimado, marca_referencia: i.marca_referencia || undefined,\n  candidatos: Object.fromEntries(Object.entries(i.candidatos || {}).map(([emp, l]) => [emp,\n    (l || []).map(c => ({ codigo: c.codigo, descricao: c.descricao, marca: c.marca, preco_tabela: c.preco }))])),\n}));\n\nconst tabelas = Object.entries(cand.catalogos || {}).map(([id, c]) => `${id} (${(c && c.nome) || id})`);\nconst ids = Object.keys(cand.catalogos || {});\nconst exemplo = ids.length ? ids : ['TABELA'];\nconst system = `Você é especialista técnico em produtos e analista de licitações (Lei 14.133/2021) da empresa ${cfg.empresa.nome}.\nPortfólio: ${cfg.empresa.portfolio}\nPara cada item do edital, compare a especificação com os produtos CANDIDATOS de cada tabela de preço: ${tabelas.join(', ') || 'nenhuma'}.\nREGRAS:\n1. Escolha SOMENTE entre os candidatos fornecidos (use o \"codigo\" exatamente como veio). Nunca invente produto ou código.\n2. Veredito por tabela:\n   - ATENDE: todas as características obrigatórias batem (material, volume/tamanho, composição, método, apresentação, nº de testes etc.).\n   - ATENDE_PARCIAL: mesmo produto, mas há divergência que precisa de conferência (ex.: embalagem diferente, medida próxima, especificação não informada na tabela).\n   - NAO_ATENDE: nenhum candidato atende. Nesse caso \"codigo\": null.\n3. Seja rigoroso: medida, volume, composição e método errados = NAO_ATENDE. Na dúvida, ATENDE_PARCIAL com a divergência explicada.\n4. Embalagem: se a tabela vende em caixa/pacote (ex.: \"C/100\", \"COM 1000UN\", \"10UN\") e o edital pede por unidade, informe \"itens_por_embalagem\" (número) e \"converter_para_unidade\": true. Se a unidade do edital já for a embalagem (CX, PCT, KIT), \"converter_para_unidade\": false.\n5. Se o edital cita marca de referência, diga se o ofertado é a mesma marca ou similar.\n6. A proposta é emitida pela ${cfg.empresa.nome} e pode ofertar produtos de qualquer tabela.\n   Em \"escolha\" indique de qual tabela sai o produto a ofertar: primeiro o que melhor atende; empate técnico, o de menor preço. Se nenhum atende, null.\n7. Seja objetivo: justificativa em 1 frase; divergências em itens curtos.\nResponda SOMENTE JSON:\n{\"itens\":[{\"numero\":\"1\",${exemplo.map(t => `\"${t}\":{\"codigo\":\"123\"|null,\"veredito\":\"ATENDE|ATENDE_PARCIAL|NAO_ATENDE\",\"justificativa\":\"...\",\"divergencias\":[\"...\"],\"itens_por_embalagem\":1,\"converter_para_unidade\":false}`).join(',')},\"escolha\":${exemplo.map(t => `\"${t}\"`).join('|')}|null,\"recomendacao\":\"produto a ofertar e por quê (1 frase)\"}],\"observacoes_gerais\":[\"...\"]}`;\n\nconst user = `PROCESSO: ${base.rec.orgao} — ${base.rec.modalidadeNome} ${base.rec.numeroCompra}/${base.rec.anoCompra} — ${base.rec.objetoCompra}\nITENS COM CANDIDATOS (${compacto.length}):\n${JSON.stringify(compacto)}`;\n\nreturn {\n  json: {\n    ...base,\n    cruzamento_entrada: { catalogos: cand.catalogos || {}, itens: cand.itens || [], total_itens: cand.total_itens || 0, erro: cand.error ? JSON.stringify(cand.error).slice(0, 200) : null },\n    tem_itens: compacto.length > 0,\n    body: {\n      model: cfg.ia.claudeAuditor,\n      max_tokens: 32000,\n      system,\n      messages: [{ role: 'user', content: user }],\n    },\n  },\n};\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "39202660-da81-4558-bfa5-58b487160ca5",
+      "id": "e8a90961-d2a4-5902-a1cd-818815510f86",
       "name": "Montar prompt · Cruzamento",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -657,7 +657,7 @@
           },
           "conditions": [
             {
-              "id": "9b4df01c-7e15-427d-9dc6-475a7504e296",
+              "id": "f7f847bd-2b83-5a19-aa9d-ac651e7f477e",
               "leftValue": "={{ $json.tem_itens }}",
               "rightValue": "",
               "operator": {
@@ -671,7 +671,7 @@
         },
         "options": {}
       },
-      "id": "00e19382-9813-4f7a-9a3e-5deae0a50544",
+      "id": "e966aae5-7c98-5820-b2ff-118b7c30daef",
       "name": "Há itens p/ cruzamento?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -702,7 +702,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "4011a9b0-0111-4643-adb9-172387c1cdea",
+      "id": "293fb9a0-b100-5df2-9c2f-abe4d78a06b4",
       "name": "Agente Cruzamento · Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -725,7 +725,7 @@
         "jsCode": "// Aplica o cruzamento item × catálogo. Valida que todo código escolhido existe entre os candidatos\n// (a IA não pode inventar código) e calcula o preço unitário sugerido a partir da tabela.\nconst prep = $('Montar prompt · Cruzamento').item.json;\nconst r = $input.item.json || {};\nconst entrada = prep.cruzamento_entrada || {};\nconst avisos = [];\nif (entrada.erro) avisos.push('Catálogo/pré-seleção indisponível: ' + entrada.erro);\n\nlet ia = null;\nif (prep.tem_itens) {\n  try {\n    if (r.error) throw new Error(JSON.stringify(r.error).slice(0, 200));\n    const t = (r.content || []).filter(c => c.type === 'text').map(c => c.text).join('');\n    const limpo = t.replace(/^```json\\s*|```\\s*$/g, '').trim();\n    ia = JSON.parse(limpo.slice(limpo.indexOf('{'), limpo.lastIndexOf('}') + 1));\n  } catch (e) {\n    avisos.push('Agente de cruzamento indisponível (' + e.message + ') — sugestões apenas por similaridade, conferir item a item.');\n  }\n}\nconst porNumero = Object.fromEntries(((ia && ia.itens) || []).map(x => [String(x.numero), x]));\nconst ordemTabela = t => { const i = Object.keys(entrada.catalogos || {}).indexOf(t); return i < 0 ? 99 : i; };\nconst num = v => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);\n\nconst itens = (entrada.itens || []).map(it => {\n  const decisao = porNumero[String(it.numero)] || {};\n  const ofertas = {};\n  for (const [emp, lista] of Object.entries(it.candidatos || {})) {\n    const d = decisao[emp];\n    let c = null, veredito, justificativa, divergencias = [];\n    if (d && d.codigo !== null && d.codigo !== undefined) {\n      c = (lista || []).find(x => String(x.codigo) === String(d.codigo));\n      if (!c) { veredito = 'VERIFICAR'; justificativa = `IA indicou código ${d.codigo}, que não está entre os candidatos — descartado.`; }\n    }\n    if (d && c) { veredito = d.veredito || 'VERIFICAR'; justificativa = d.justificativa || ''; divergencias = d.divergencias || []; }\n    else if (d && !veredito) { veredito = d.veredito || 'NAO_ATENDE'; justificativa = d.justificativa || 'Nenhum candidato atende.'; }\n    else if (!d && Object.keys(decisao).length) { // a IA avaliou o item e não indicou produto desta empresa\n      veredito = 'NAO_ATENDE'; justificativa = 'Agente de IA não indicou produto compatível nesta tabela.';\n    }\n    else if (!d && (lista || []).length && lista[0].score >= 0.45) { // sem decisão da IA: só similaridade alta, para conferência\n      c = lista[0]; veredito = 'VERIFICAR'; justificativa = `Sugestão automática por similaridade (${c.score}) — não avaliada pela IA.`;\n    }\n    if (!c && !veredito) continue;\n    const porEmb = num(d && d.itens_por_embalagem) || 1;\n    const converter = !!(d && d.converter_para_unidade) && porEmb > 1;\n    const preco = c ? num(c.preco) : null;\n    ofertas[emp] = {\n      codigo: c ? c.codigo : null, descricao: c ? c.descricao : null, marca: c ? c.marca : null,\n      preco_tabela: preco, itens_por_embalagem: porEmb, converter_para_unidade: converter,\n      preco_unitario_sugerido: preco ? Math.round((converter ? preco / porEmb : preco) * 10000) / 10000 : null,\n      sem_preco: !!c && !preco, veredito, justificativa, divergencias,\n      alternativas: (lista || []).filter(x => !c || x.codigo !== c.codigo).slice(0, 3).map(x => `${x.codigo} · ${x.descricao} · ${x.marca}`),\n    };\n  }\n  // produto que entra na proposta: escolha da IA (se válida) ou melhor veredito / menor preço / ordem das tabelas\n  const RANK = { ATENDE: 3, ATENDE_PARCIAL: 2, VERIFICAR: 1 };\n  const validas = Object.entries(ofertas).filter(([, o]) => o.codigo && RANK[o.veredito]);\n  let escolha = decisao.escolha && ofertas[decisao.escolha] && ofertas[decisao.escolha].codigo && RANK[ofertas[decisao.escolha].veredito] ? decisao.escolha : null;\n  if (!escolha && validas.length) {\n    validas.sort(([ea, a], [eb, b]) => (RANK[b.veredito] - RANK[a.veredito])\n      || ((a.preco_unitario_sugerido || Infinity) - (b.preco_unitario_sugerido || Infinity))\n      || (ordemTabela(ea) - ordemTabela(eb)));\n    escolha = validas[0][0];\n  }\n  return {\n    escolha, lote: it.lote || '',\n    numero: it.numero, descricao: it.descricao, quantidade: it.quantidade, unidade: it.unidade,\n    valor_unitario_estimado: it.valor_unitario_estimado, marca_referencia: it.marca_referencia, origem: it.origem,\n    ofertas, recomendacao: decisao.recomendacao || '',\n  };\n});\n\nif (!(entrada.itens || []).length) avisos.push('Itens do edital não obtidos (PNCP/edital) — cruzamento e proposta prévia sem itens.');\nconst analise = { ...prep.analise };\nanalise.cruzamento = {\n  catalogos: entrada.catalogos || {}, total_itens: entrada.total_itens || 0, itens,\n  observacoes: (ia && ia.observacoes_gerais) || [], avisos, por_ia: !!ia,\n};\nreturn { json: { pasta_rel: prep.pasta_rel, rec: prep.rec, analise } };\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "c3bce1d0-ad0c-426f-8a5c-7f1035c271be",
+      "id": "7e674db9-1f89-59c1-a416-00c07c6671ff",
       "name": "Aplicar cruzamento",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -745,7 +745,7 @@
           "timeout": 180000
         }
       },
-      "id": "00f1df91-7105-4ecc-8f87-64be7456e5da",
+      "id": "d5593c9a-8c12-5b7e-9f32-5350adb88025",
       "name": "Worker · gravar análise e declarações",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -763,7 +763,7 @@
         "jsCode": "// Fecha a iteração: devolve ao loop apenas o essencial (o \"done\" do loop acumula estes itens).\nconst x = $('Aplicar revisão').item.json;\nconst w = $input.item.json || {};\nreturn {\n  json: {\n    controle: x.rec.numeroControlePNCP,\n    analise: x.analise,\n    gravacao: w.error ? 'ERRO: ' + JSON.stringify(w.error).slice(0, 200) : (w.resumo || 'ok'),\n    declaracoes_geradas: w.declaracoes || [],\n  },\n};\n",
         "mode": "runOnceForEachItem"
       },
-      "id": "8590bbcb-3613-4216-a54c-c2b41759193e",
+      "id": "e7f5041d-f39d-5c42-8b66-6235d028a263",
       "name": "Retornar ao loop",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -776,7 +776,7 @@
       "parameters": {
         "jsCode": "// Reúne todos os processos selecionados + as análises (saída \"done\" do loop) e monta o payload do relatório.\nconst cfg = $('Configuração').first().json;\nconst consolid = $('Consolidar + Filtros').first().json;\nconst estat = consolid.estatisticas || {};\n\nlet base = [];\nif (!consolid.vazio) {\n  try { base = $('Aplicar triagem').all().map(i => i.json); } catch (e) { base = []; }\n}\nconst analises = {};\nfor (const i of $input.all()) {\n  if (i.json && i.json.controle && i.json.analise) analises[i.json.controle] = i.json.analise;\n}\n\nconst oportunidades = base.map(p => ({\n  ...p,\n  analise: analises[p.numeroControlePNCP] ||\n    { relevancia: p.relevancia_triagem, resumo: p.motivo_triagem ? 'Triagem: ' + p.motivo_triagem : null },\n}));\n\nconst avisos = [];\nif (estat.paginasComErro) avisos.push(`${estat.paginasComErro} página(s) do PNCP falharam após as tentativas — resultado pode estar incompleto. ${(estat.errosAmostra || []).join(' | ')}`);\nconst avisoTriagem = base.find(p => p.aviso_triagem);\nif (avisoTriagem) avisos.push(avisoTriagem.aviso_triagem);\nconst naoAnalisados = base.filter(p => !analises[p.numeroControlePNCP]).length;\nif (naoAnalisados) avisos.push(`${naoAnalisados} processo(s) sem análise de edital (descartados na triagem ou acima do limite).`);\n\nreturn [{\n  json: {\n    janela_ini: cfg.janela.inicio,\n    janela_fim: cfg.janela.fim,\n    ufs: cfg.ufs,\n    registros_lidos: estat.registrosLidos || null,\n    registros_janela: estat.naJanela || null,\n    cnpj: cfg.empresa.cnpj || null,\n    empresa: cfg.empresa.nome || null,\n    cnae: cfg.empresa.cnaePrincipal || null,\n    avisos: avisos.join(' · ') || null,\n    oportunidades,\n  },\n}];\n"
       },
-      "id": "88cfd44b-7b12-4627-8e89-dbf114f4e14b",
+      "id": "c89ddec5-7bf7-5515-a2fb-d7aaf3c127fd",
       "name": "Montar payload · Relatório",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -796,7 +796,7 @@
           "timeout": 300000
         }
       },
-      "id": "08499ecc-89c9-4daf-9e50-08b4f4a8ec1c",
+      "id": "fabc364b-8b1e-5350-b60d-6bf79434ec45",
       "name": "Worker · gerar relatório Excel",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -813,7 +813,7 @@
       "parameters": {
         "jsCode": "const r = $input.first().json;\nconst c = $('Configuração').first().json;\nreturn [{ json: {\n  janela: c.janela.rotulo,\n  relatorio: r.arquivo || null,\n  oportunidades: r.qtd ?? null,\n  erro: r.error ? JSON.stringify(r.error).slice(0, 300) : null,\n} }];"
       },
-      "id": "c35a2917-ce82-4b24-b250-3d094b300a6e",
+      "id": "810feebe-c201-54ca-9840-122a910f689c",
       "name": "Resumo da execução",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -826,7 +826,7 @@
       "parameters": {
         "jsCode": "// Monta um envio por destinatário (relatório filtrado pelas UFs de cada um).\nconst cfg = $('Configuração').first().json;\nconst payload = $('Montar payload · Relatório').first().json;\nreturn cfg.envios.map(e => {\n  const sufixo = e.ufs.join('-');\n  const qtd = payload.oportunidades.filter(o => e.ufs.includes(o.uf)).length;\n  return { json: { para: e.para, ufs: e.ufs, sufixo, qtdPrevista: qtd, janela: cfg.janela.rotulo,\n    payload: { ...payload, ufs_filtro: e.ufs, sufixo } } };\n});\n"
       },
-      "id": "4ecd074d-f973-4966-bfb8-ae3dbee6faf4",
+      "id": "1a51d996-f467-54fb-af5b-e4861c958a97",
       "name": "Envios por destinatário",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -846,7 +846,7 @@
           "timeout": 300000
         }
       },
-      "id": "982a84e5-36fc-4b6e-92d7-afe0d1169d74",
+      "id": "52c93f0e-7ea6-579c-b594-ad0419c2e47d",
       "name": "Worker · relatório do destinatário",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -881,7 +881,7 @@
           "timeout": 120000
         }
       },
-      "id": "adc514c0-4d86-4328-b57a-157dc3f19945",
+      "id": "38d3b0e0-1b86-52d6-95e3-e21481b3ec19",
       "name": "Worker · baixar anexo",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -905,7 +905,7 @@
           "attachments": "data"
         }
       },
-      "id": "0f7f2358-e5c2-47d5-871d-be937a7bc83a",
+      "id": "c4451152-f9f4-5f67-a813-358d49cee24a",
       "name": "Enviar e-mail (SMTP)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -913,7 +913,7 @@
         4220,
         -640
       ],
-      "webhookId": "341f0cdf-07de-453f-bd12-1bff9ddca127",
+      "webhookId": "9c6064ff-fc51-5b53-828f-d4983851165c",
       "credentials": {
         "smtp": {
           "name": "SMTP"
@@ -928,7 +928,7 @@
         "width": 520,
         "color": 6
       },
-      "id": "88396201-d459-43c6-b0e6-137a55158ab4",
+      "id": "2d7636a9-849a-5550-aca5-1407606525ea",
       "name": "Nota 44",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -944,7 +944,7 @@
         "width": 560,
         "color": 3
       },
-      "id": "a7b62ede-5cf9-4245-93b4-610e794f906b",
+      "id": "88af0125-f264-5cd8-98d4-ae961819aa52",
       "name": "Nota 45",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -960,7 +960,7 @@
         "width": 760,
         "color": 4
       },
-      "id": "e11b5337-5e7b-46d6-97ae-430aa12ae704",
+      "id": "44797042-9462-5811-be96-b5ee7f6d285f",
       "name": "Nota 46",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

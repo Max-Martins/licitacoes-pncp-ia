@@ -19,8 +19,13 @@ def js(nome):
 nodes, conns = [], {}
 
 
+def uid(*partes):
+    """Identificador estável: o JSON gerado só muda quando o fluxo muda."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, "licitacoes-pncp-ia/" + "/".join(partes)))
+
+
 def node(nome, tipo, versao, params, pos, **extra):
-    n = {"parameters": params, "id": str(uuid.uuid4()), "name": nome, "type": tipo, "typeVersion": versao, "position": pos}
+    n = {"parameters": params, "id": uid(nome), "name": nome, "type": tipo, "typeVersion": versao, "position": pos}
     n.update(extra)
     nodes.append(n)
     return nome
@@ -80,7 +85,7 @@ def se(nome, expressao, pos):
     return node(nome, "n8n-nodes-base.if", 2, {
         "conditions": {
             "options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose"},
-            "conditions": [{"id": str(uuid.uuid4()), "leftValue": expressao, "rightValue": "",
+            "conditions": [{"id": uid(nome, "condicao"), "leftValue": expressao, "rightValue": "",
                             "operator": {"type": "boolean", "operation": "true", "singleValue": True}}],
             "combinator": "and"},
         "options": {}}, pos)
@@ -103,13 +108,13 @@ node("Loop · página 1", "n8n-nodes-base.splitInBatches", 3, {"options": {}}, [
 code("PNCP · consultar página 1", "03_consultar_pncp.js", [700, 400], por_item=True)
 se("Repetir? (p1)", "={{ $json.repetir }}", [920, 400])
 node("Aguardar (p1)", "n8n-nodes-base.wait", 1.1, {"resume": "timeInterval", "amount": "={{ $json.espera }}", "unit": "seconds"},
-     [1140, 520], webhookId=str(uuid.uuid4()))
+     [1140, 520], webhookId=uid("Aguardar (p1)", "webhook"))
 code("Fila · demais páginas", "04_fila_demais.js", [700, 120])
 node("Loop · demais páginas", "n8n-nodes-base.splitInBatches", 3, {"options": {}}, [920, 120])
 code("PNCP · consultar demais páginas", "03_consultar_pncp.js", [1140, 220], por_item=True)
 se("Repetir? (demais)", "={{ $json.repetir }}", [1360, 220])
 node("Aguardar (demais)", "n8n-nodes-base.wait", 1.1, {"resume": "timeInterval", "amount": "={{ $json.espera }}", "unit": "seconds"},
-     [1580, 340], webhookId=str(uuid.uuid4()))
+     [1580, 340], webhookId=uid("Aguardar (demais)", "webhook"))
 se("É sentinela? (demais)", "={{ !!$json.sentinela }}", [1140, 40])
 code("Consolidar + Filtros", "04_consolidar_filtrar.js", [1360, -160])
 se("Há oportunidades?", "={{ !$json.vazio }}", [1580, -160])
@@ -244,7 +249,7 @@ node("Enviar e-mail (SMTP)", "n8n-nodes-base.emailSend", 2.1, {
     "subject": "={{ 'Relatório de Pregões — ' + $('Envios por destinatário').item.json.janela + ' — ' + $('Envios por destinatário').item.json.ufs.join(', ') }}",
     "emailFormat": "html", "html": MSG,
     "options": {"appendAttribution": False, "attachments": "data"}},
-    [4220, -640], webhookId=str(uuid.uuid4()),
+    [4220, -640], webhookId=uid("Enviar e-mail", "webhook"),
     credentials={"smtp": {"name": "SMTP"}},
     notes="Credencial SMTP. Gmail: smtp.gmail.com, porta 465, SSL, senha de app (myaccount.google.com/apppasswords).")
 liga("Worker · gerar relatório Excel", "Envios por destinatário")

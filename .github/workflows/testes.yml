@@ -13,13 +13,7 @@ jobs:
       - name: O fluxo publicado está atualizado com o código dos nós
         run: |
           python sistema/n8n/build_workflow.py
-          python - <<'PY'
-          import json, subprocess
-          novo = json.load(open("sistema/n8n/LICITACOES_PNCP_IA.json", encoding="utf-8"))
-          antigo = json.loads(subprocess.check_output(["git", "show", "HEAD:sistema/n8n/LICITACOES_PNCP_IA.json"]))
-          sem_ids = lambda wf: [{k: v for k, v in n.items() if k not in ("id", "webhookId")} for n in wf["nodes"]]
-          assert sem_ids(novo) == sem_ids(antigo), "Rode python sistema/n8n/build_workflow.py e faça commit do JSON"
-          PY
+          git diff --exit-code sistema/n8n/LICITACOES_PNCP_IA.json || (echo "Rode python sistema/n8n/build_workflow.py e faça commit do JSON" && exit 1)
       - run: node sistema/lib/test_matcher.js
       - run: node sistema/n8n/test_captacao.js
       - run: node sistema/n8n/test_harness.js
